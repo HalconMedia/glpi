@@ -225,7 +225,7 @@ abstract class CommonITILTask  extends CommonDBTM {
       Log::history($this->getField($item->getForeignKeyField()), $this->getItilObjectItemType(),
                    $changes, $this->getType(), Log::HISTORY_DELETE_SUBITEM);
 
-      if ($CFG_GLPI["use_mailing"]) {
+      if (!isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"]) {
          $options = array('task_id'             => $this->fields["id"],
                            // Force is_private with data / not available
                           'is_private'          => $this->isPrivate(),
@@ -246,17 +246,17 @@ abstract class CommonITILTask  extends CommonDBTM {
          PlanningRecall::manageDatas($input['_planningrecall']);
       }
 
-//      $input["actiontime"] = $input["hour"]*HOUR_TIMESTAMP+$input["minute"]*MINUTE_TIMESTAMP;
-
-      if (isset($input['update'])
+      // do not update writer if content change. Following code can be used for #2187
+      /*if (isset($input['update'])
           && ($uid = Session::getLoginUserID())) { // Change from task form
          $input["users_id"] = $uid;
-      }
+      }*/
 
       $itemtype      = $this->getItilObjectItemType();
       $input["_job"] = new $itemtype();
 
-      if (!$input["_job"]->getFromDB($input[$input["_job"]->getForeignKeyField()])) {
+      if (isset($input[$input["_job"]->getForeignKeyField()])
+         && !$input["_job"]->getFromDB($input[$input["_job"]->getForeignKeyField()])) {
          return false;
       }
 
@@ -358,7 +358,7 @@ abstract class CommonITILTask  extends CommonDBTM {
                $item->update($input2);
             }
 
-            if ($CFG_GLPI["use_mailing"]) {
+            if (!isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"]) {
                $options = array('task_id'    => $this->fields["id"],
                                 'is_private' => $this->isPrivate());
                NotificationEvent::raiseEvent('update_task', $item, $options);
@@ -443,7 +443,7 @@ abstract class CommonITILTask  extends CommonDBTM {
          PlanningRecall::manageDatas($this->input['_planningrecall']);
       }
 
-      $donotif = $CFG_GLPI["use_mailing"];
+      $donotif = !isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"];
 
       if (isset($this->fields["begin"]) && !empty($this->fields["begin"])) {
          Planning::checkAlreadyPlanned($this->fields["users_id_tech"], $this->fields["begin"],
@@ -1512,8 +1512,11 @@ abstract class CommonITILTask  extends CommonDBTM {
       if ($this->maybePrivate() && !$showprivate) {
          $RESTRICT = " AND (`is_private` = '0'
                             OR `users_id` ='" . Session::getLoginUserID() . "'
-                            OR `users_id_tech` ='" . Session::getLoginUserID()."'
-                            OR `groups_id_tech` IN ('".implode("','",$_SESSION["glpigroups"])."')) ";
+                            OR `users_id_tech` ='" . Session::getLoginUserID()."'";
+         if (is_array($_SESSION['glpigroups']) && count($_SESSION['glpigroups'])) {
+            $RESTRICT .= " OR `groups_id_tech` IN ('".implode("','", $_SESSION["glpigroups"])."')";
+         }
+         $RESTRICT .= ") ";
       }
 
       $query = "SELECT `id`, `date`

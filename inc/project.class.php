@@ -134,7 +134,7 @@ class Project extends CommonDBTM {
                if ($_SESSION['glpishow_count_on_tabs']) {
                   $nb = countElementsInTable($this->getTable(),
                                              "`".$this->getForeignKeyField()."` = '".
-                                                $item->getID()."'");
+                                                $item->getID()."' AND `is_deleted`=0");
                }
                $ong[1] = self::createTabEntry($this->getTypeName(Session::getPluralNumber()), $nb);
                $ong[2] = __('GANTT');
@@ -237,7 +237,7 @@ class Project extends CommonDBTM {
    function post_updateItem($history=1) {
       global $CFG_GLPI;
 
-      if ($CFG_GLPI["use_mailing"]) {
+      if (!isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"]) {
          // Read again project to be sure that all data are up to date
          $this->getFromDB($this->fields['id']);
          NotificationEvent::raiseEvent("update", $this);
@@ -252,7 +252,7 @@ class Project extends CommonDBTM {
       if (isset($this->input["_oldID"])) {
          ProjectCost::cloneProject($this->input["_oldID"], $this->fields['id']);
       }
-      if ($CFG_GLPI["use_mailing"]) {
+      if (!isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"]) {
          // Clean reload of the project
          $this->getFromDB($this->fields['id']);
 
@@ -280,8 +280,11 @@ class Project extends CommonDBTM {
 
 
    function pre_deleteItem() {
+      global $CFG_GLPI;
 
-      NotificationEvent::raiseEvent('delete',$this);
+      if (!isset($this->input['_disablenotif']) && $CFG_GLPI['use_mailing']) {
+         NotificationEvent::raiseEvent('delete', $this);
+      }
       return true;
    }
 
@@ -771,7 +774,8 @@ class Project extends CommonDBTM {
 
       $query = "SELECT *
                 FROM `".$this->getTable()."`
-                WHERE `".$this->getForeignKeyField()."` = '$ID'";
+                WHERE `".$this->getForeignKeyField()."` = '$ID'
+                AND `is_deleted`=0";
       if ($result = $DB->query($query)) {
          $numrows = $DB->numrows($result);
       }

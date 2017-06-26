@@ -136,36 +136,42 @@ class Html {
    **/
    static function convDate($time, $format=null) {
 
-      if (is_null($time) || ($time == 'NULL')) {
+      if (is_null($time) || $time == 'NULL' || trim($time) == '') {
          return NULL;
       }
 
       if (!isset($_SESSION["glpidate_format"])) {
          $_SESSION["glpidate_format"] = 0;
       }
-      if (!$format ) {
+      if (!$format) {
          $format = $_SESSION["glpidate_format"];
       }
 
+      try {
+         $date = new \DateTime($time);
+      } catch (\Exception $e) {
+         Toolbox::logDebug("Invalid date $time!");
+         Session::addMessageAfterRedirect(
+            sprintf(
+               __('%1$s %2$s'),
+               $time,
+               _x('adjective', 'Invalid')
+            )
+         );
+         return $time;
+      }
+      $mask = 'Y-m-d';
+
       switch ($format) {
          case 1 : // DD-MM-YYYY
-            $date  = substr($time, 8, 2)."-";  // day
-            $date .= substr($time, 5, 2)."-"; // month
-            $date .= substr($time, 0, 4);     // year
-            return $date;
-
+            $mask = 'd-m-Y';
+            break;
          case 2 : // MM-DD-YYYY
-            $date  = substr($time, 5, 2)."-";  // month
-            $date .= substr($time, 8, 2)."-"; // day
-            $date .= substr($time, 0, 4);     // year
-            return $date;
-
-         default : // YYYY-MM-DD
-            if (strlen($time)>10) {
-               return substr($time, 0, 10);
-            }
-            return $time;
+            $mask = 'm-d-Y';
+            break;
       }
+
+      return $date->format($mask);
    }
 
 
@@ -3767,7 +3773,7 @@ class Html {
             $out .= " href='".$param['link']."'";
 
             if (!empty($param['popup'])) {
-               $out .= " onClick=\"".Html::jsGetElementbyID('tooltippopup'.$rand).".dialog('open');\" ";
+               $out .= " onClick=\"".Html::jsGetElementbyID('tooltippopup'.$rand).".dialog('open');return false;\" ";
             }
             $out .= '>';
          }
@@ -4214,8 +4220,7 @@ class Html {
           && ($_SESSION["glpiactiveprofile"]["interface"] == "central")) {
 
          echo "<td class='tab_bg_2 responsive_hidden' width='30%'>";
-         echo "<form method='GET' action='".$CFG_GLPI["root_doc"]."/front/report.dynamic.php'
-                target='_blank'>";
+         echo "<form method='GET' action='".$CFG_GLPI["root_doc"]."/front/report.dynamic.php'>";
          echo Html::hidden('item_type', array('value' => $item_type_output));
 
          if ($item_type_output_param != 0) {

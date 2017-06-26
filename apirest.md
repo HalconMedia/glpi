@@ -401,7 +401,7 @@ $ curl -X POST \
   * *expand_dropdowns* (default: false): show dropdown name instead of id. Optional.
   * *get_hateoas* (default: true): Show relations of the item in a links attribute. Optional.
   * *get_sha1* (default: false): Get a sha1 signature instead of the full answer. Optional.
-  * *with_components*: Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], retrieve the associated components. Optional.
+  * *with_devices*: Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], retrieve the associated components. Optional.
   * *with_disks*: Only for Computer, retrieve the associated file-systems. Optional.
   * *with_softwares*: Only for Computer, retrieve the associated software's installations. Optional.
   * *with_connections*: Only for Computer, retrieve the associated direct connections (like peripherals and printers) .Optional.
@@ -700,7 +700,7 @@ $ curl -X GET \
   * *expand_dropdowns* (default: false): show dropdown name instead of id. Optional.
   * *get_hateoas* (default: true): Show relations of the item in a links attribute. Optional.
   * *get_sha1* (default: false): Get a sha1 signature instead of the full answer. Optional.
-  * *with_components*: Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], retrieve the associated components. Optional.
+  * *with_devices*: Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], retrieve the associated components. Optional.
   * *with_disks*: Only for Computer, retrieve the associated file-systems. Optional.
   * *with_softwares*: Only for Computer, retrieve the associated software's installations. Optional.
   * *with_connections*: Only for Computer, retrieve the associated direct connections (like peripherals and printers) .Optional.
@@ -810,7 +810,7 @@ $ curl -X GET \
       Each criterion object must provide:
         * *link*: (optional for 1st element) logical operator in [AND, OR, AND NOT, AND NOT].
         * *field*: id of the searchoption.
-        * *searchtype*: type of search in [contains, equals, notequals, lessthan, morethan, under, notunder].
+        * *searchtype*: type of search in [contains¹, equals², notequals², lessthan, morethan, under, notunder].
         * *value*: the value to search.
 
       Ex:
@@ -839,7 +839,7 @@ $ curl -X GET \
         * *link*: logical operator in [AND, OR, AND NOT, AND NOT]. Mandatory.
         * *itemtype*: second itemtype to link.
         * *field*: id of the searchoption.
-        * *searchtype*: type of search in [contains, equals, notequals, lessthan, morethan, under, notunder].
+        * *searchtype*: type of search in [contains¹, equals², notequals², lessthan, morethan, under, notunder].
         * *value*: the value to search.
 
       Ex:
@@ -878,6 +878,10 @@ $ curl -X GET \
    So, we provide arrays to guarantying sorted rows.
   * *uid_cols* (default false): a boolean to identify cols by the 'uniqid' of the searchoptions instead of a numeric value (see [List searchOptions](#list-searchoptions) and 'uid' field)
   * *giveItems* (default false): a boolean to retrieve the data with the html parsed from core, new data are provided in data_html key.
+
+  * ¹ - *contains* will use a wildcard search per default. You can restrict at the beginning using the *^* character, and/or at the end using the *$* character.
+  * ² - *equals* and *notequals* are designed to be used with dropdowns. Do not expect those operators to search for a strictly equal value (see ¹ above).
+
 * **Returns**:
   * 200 (OK) with all rows data with this format:
 

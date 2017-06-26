@@ -397,7 +397,7 @@ abstract class API extends CommonGLPI {
     *    - 'expand_dropdowns': Show dropdown's names instead of id. default: false. Optionnal
     *    - 'get_hateoas':      Show relation of current item in a links attribute. default: true. Optionnal
     *    - 'get_sha1':         Get a sha1 signature instead of the full answer. default: false. Optionnal
-    *    - 'with_components':  Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], Optionnal.
+    *    - 'with_devices':  Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], Optionnal.
     *    - 'with_disks':       Only for Computer, retrieve the associated filesystems. Optionnal.
     *    - 'with_softwares':   Only for Computer, retrieve the associated softwares installations. Optionnal.
     *    - 'with_connections': Only for Computer, retrieve the associated direct connections (like peripherals and printers) .Optionnal.
@@ -422,7 +422,7 @@ abstract class API extends CommonGLPI {
       $default = array('expand_dropdowns'  => false,
                        'get_hateoas'       => true,
                        'get_sha1'          => false,
-                       'with_components'   => false,
+                       'with_devices'   => false,
                        'with_disks'        => false,
                        'with_softwares'    => false,
                        'with_connections'  => false,
@@ -1094,7 +1094,7 @@ abstract class API extends CommonGLPI {
     *    - 'expand_dropdowns':  Show dropdown's names instead of id. default: false. Optionnal
     *    - 'get_hateoas':       Show relation of current item in a links attribute. default: true. Optionnal
     *    - 'get_sha1':          Get a sha1 signature instead of the full answer. default: false. Optionnal
-    *    - 'with_components':   Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], Optionnal.
+    *    - 'with_devices':   Only for [Computer, NetworkEquipment, Peripheral, Phone, Printer], Optionnal.
     *    - 'with_disks':        Only for Computer, retrieve the associated filesystems. Optionnal.
     *    - 'with_softwares':    Only for Computer, retrieve the associated softwares installations. Optionnal.
     *    - 'with_connections':  Only for Computer, retrieve the associated direct connections (like peripherals and printers) .Optionnal.
@@ -1292,9 +1292,13 @@ abstract class API extends CommonGLPI {
       // Check the criterias are valid
       if (isset($params['criteria']) && is_array($params['criteria'])) {
          foreach ($params['criteria'] as $criteria) {
-            if (isset($criteria['field'])
-                  && ctype_digit($criteria['field'])
-                  && !array_key_exists($criteria['field'], $soptions)) {
+            if (!isset($criteria['field']) || !isset($criteria['searchtype'])
+                || !isset($criteria['value'])) {
+               return $this->returnError(__("Malformed search criteria"));
+            }
+
+            if (!ctype_digit((string) $criteria['field']) 
+                  || !array_key_exists($criteria['field'], $soptions)) {
                return $this->returnError(__("Bad field ID in search criteria"));
             }
          }

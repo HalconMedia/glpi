@@ -276,7 +276,7 @@ abstract class CommonITILValidation  extends CommonDBChild {
             $item->update($input);
          }
 
-         if ($CFG_GLPI["use_mailing"]) {
+         if (!isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"]) {
             $options = array('validation_id'     => $this->fields["id"],
                              'validation_status' => $this->fields["status"]);
             $mailsend = NotificationEvent::raiseEvent('validation',$item,$options);
@@ -361,6 +361,20 @@ abstract class CommonITILValidation  extends CommonDBChild {
          }
       }
       parent::post_updateItem($history);
+   }
+
+   function pre_deleteItem() {
+
+      $item    = new static::$itemtype();
+      if ($item->getFromDB($this->fields[static::$items_id])) {
+         if (($item->fields['global_validation'] == self::WAITING)) {
+
+            $input['id']                = $this->fields[static::$items_id];
+            $input['global_validation'] = self::NONE;
+            $item->update($input);
+         }
+      }
+      return true;
    }
 
 

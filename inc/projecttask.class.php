@@ -190,7 +190,7 @@ class ProjectTask extends CommonDBChild {
    function post_updateItem($history=1) {
       global $CFG_GLPI;
 
-      if ($CFG_GLPI["use_mailing"]) {
+      if (!isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"]) {
          // Read again project to be sure that all data are up to date
          $this->getFromDB($this->fields['id']);
          NotificationEvent::raiseEvent("update", $this);
@@ -201,7 +201,7 @@ class ProjectTask extends CommonDBChild {
    function post_addItem() {
       global $DB, $CFG_GLPI;
 
-      if ($CFG_GLPI["use_mailing"]) {
+      if (!isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"]) {
          // Clean reload of the project
          $this->getFromDB($this->fields['id']);
 
@@ -257,8 +257,11 @@ class ProjectTask extends CommonDBChild {
 
 
    function pre_deleteItem() {
+      global $CFG_GLPI;
 
-      NotificationEvent::raiseEvent('delete',$this);
+      if (!isset($this->input['_disablenotif']) && $CFG_GLPI['use_mailing']) {
+         NotificationEvent::raiseEvent('delete', $this);
+      }
       return true;
    }
 
@@ -434,7 +437,12 @@ class ProjectTask extends CommonDBChild {
       _e('Milestone');
       echo "</td>";
       echo "<td>";
-      Dropdown::showYesNo("is_milestone", $this->fields["is_milestone"]);
+      $rand = mt_rand();
+      Dropdown::showYesNo("is_milestone", $this->fields["is_milestone"], -1, ['rand' => $rand]);
+      $js = "$('#dropdown_is_milestone$rand').on('change', function(e) {
+         $('tr.is_milestone').toggleClass('starthidden');
+      })";
+      echo Html::scriptBlock($js);
       echo "</td>";
       echo "</tr>";
 
@@ -452,7 +460,7 @@ class ProjectTask extends CommonDBChild {
                               array('value' => $this->fields['real_start_date']));
       echo "</td></tr>\n";
 
-      echo "<tr class='tab_bg_1'>";
+      echo "<tr class='tab_bg_1 is_milestone" . ($this->fields['is_milestone'] ? ' starthidden' : '')  . "'>";
       echo "<td>".__('Planned end date')."</td>";
       echo "<td>";
       Html::showDateTimeField("plan_end_date", array('value' => $this->fields['plan_end_date']));
@@ -462,7 +470,7 @@ class ProjectTask extends CommonDBChild {
       Html::showDateTimeField("real_end_date", array('value' => $this->fields['real_end_date']));
       echo "</td></tr>\n";
 
-      echo "<tr class='tab_bg_1'>";
+      echo "<tr class='tab_bg_1 is_milestone" . ($this->fields['is_milestone'] ? ' starthidden' : '')  . "'>";
       echo "<td>".__('Planned duration')."</td>";
       echo "<td>";
 
@@ -487,11 +495,11 @@ class ProjectTask extends CommonDBChild {
          $ticket_duration = ProjectTask_Ticket::getTicketsTotalActionTime($this->getID());
          echo "<br>";
          printf(__('%1$s: %2$s'),__('Tickets duration'),
-                Html::timestampToString($ticket_duration, false));
+               Html::timestampToString($ticket_duration, false));
          echo '<br>';
          printf(__('%1$s: %2$s'),__('Total duration'),
-                Html::timestampToString($ticket_duration+$this->fields["effective_duration"],
-                                        false));
+               Html::timestampToString($ticket_duration+$this->fields["effective_duration"],
+                                       false));
       }
       echo "</td></tr>\n";
 
@@ -1002,7 +1010,7 @@ class ProjectTask extends CommonDBChild {
                                                ? getSonsOf('glpi_entities',
                                                            $task->fields['entities_id'])
                                                : $task->fields['entities_id']),
-                         );
+                         'checkright'      => true);
          $addrand = Dropdown::showSelectItemFromItemtypes($params);
 
          echo "</td>";

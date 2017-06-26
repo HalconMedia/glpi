@@ -288,7 +288,7 @@ abstract class CommonITILActor extends CommonDBRelation {
    function post_deleteFromDB() {
       global $CFG_GLPI;
 
-      $donotif = $CFG_GLPI["use_mailing"];
+      $donotif = !isset($this->input['_disablenotif']) && $CFG_GLPI["use_mailing"];
 
 //       if (isset($this->input["_no_notif"]) && $this->input["_no_notif"]) {
 //          $donotif = false;
@@ -335,7 +335,7 @@ abstract class CommonITILActor extends CommonDBRelation {
 
       if (!isset($input['alternative_email']) || is_null($input['alternative_email'])) {
          $input['alternative_email'] = '';
-      } else if (!NotificationMail::isUserAddressValid($input['alternative_email'])) {
+      } else if ($input['alternative_email'] != '' && !NotificationMail::isUserAddressValid($input['alternative_email'])) {
          Session::addMessageAfterRedirect(
             __('Invalid email address'),
             false,

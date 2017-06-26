@@ -1146,7 +1146,13 @@ abstract class CommonITILObject extends CommonDBTM {
           || !($CFG_GLPI['impact_mask']&(1<<$input["impact"]))) {
          $input["impact"] = 3;
       }
-      if (!isset($input["priority"])) {
+
+      $canpriority = true;
+      if ($this->getType() == 'Ticket') {
+         $canpriority = Session::haveRight(Ticket::$rightname, Ticket::CHANGEPRIORITY);
+      }
+
+      if ($canpriority && !isset($input["priority"]) || !$canpriority) {
          $input["priority"] = $this->computePriority($input["urgency"], $input["impact"]);
       }
 
@@ -3430,7 +3436,7 @@ abstract class CommonITILObject extends CommonDBTM {
          $right = $options["_right"];
       }
 
-      if ($options["_users_id_".$typename] == 0) {
+      if ($options["_users_id_".$typename] == 0 && !isset($_REQUEST["_users_id_$typename"])) {
          $options["_users_id_".$typename] = $this->getDefaultActor($type);
       }
       $rand   = mt_rand();
@@ -3524,7 +3530,7 @@ abstract class CommonITILObject extends CommonDBTM {
 
             $url = $this->getSearchURL()."?".Toolbox::append_params($options2,'&amp;');
 
-            echo "&nbsp;<a href='$url' title=\"".__s('Processing')."\" target='_blank'>(";
+            echo "&nbsp;<a href='$url' title=\"".__s('Processing')."\">(";
             printf(__('%1$s: %2$s'), __('Processing'),
                    $this->countActiveObjectsForUser($options["_users_id_".$typename]));
             echo ")</a>";

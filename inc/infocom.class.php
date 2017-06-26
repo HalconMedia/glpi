@@ -656,6 +656,9 @@ class Infocom extends CommonDBChild {
     * @return float
    **/
    static function showTco($ticket_tco, $value, $date_achat="") {
+      if ($ticket_tco == NOT_AVAILABLE) {
+         return '-';
+      }
 
       // Affiche le TCO ou le TCO mensuel pour un matériel
       $totalcost = $ticket_tco;
@@ -1130,7 +1133,7 @@ class Infocom extends CommonDBChild {
                                                   'SoftwareLicense'))) {
                echo "<td>".__('Monthly TCO')."</td><td>";
                echo self::showTco($item->getField('ticket_tco'), $ic->fields["value"],
-                                  $ic->fields["warranty_date"]);
+                                  $ic->fields["buy_date"]);
             } else {
                 echo "<td colspan='2'>";
             }
